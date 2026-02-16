@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "Substack Growth OS",
+  "description": "Turn Substack into a full growth operating system for creators.",
+  "version": "1.0.0",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "https://*.substack.com/*",
+    "http://*.substack.com/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Substack Growth OS"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.substack.com/*",
+        "http://*.substack.com/*"
+      ],
+      "js": [
+        "utils/storage.js",
+        "modules/readerPsychology.js",
+        "modules/researchAssistant.js",
+        "modules/competitiveOverlay.js",
+        "modules/frameworkLibrary.js",
+        "modules/engagementPrediction.js",
+        "modules/conversionOptimizer.js",
+        "contentScript.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
