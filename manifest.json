@@ -12,7 +12,9 @@
   "host_permissions": [
     "https://*.substack.com/*",
     "http://*.substack.com/*",
-    "<all_urls>"
+    "<all_urls>",
+    "https://substack.com/*",
+    "http://substack.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -25,7 +27,9 @@
     {
       "matches": [
         "https://*.substack.com/*",
-        "http://*.substack.com/*"
+        "http://*.substack.com/*",
+        "https://substack.com/*",
+        "http://substack.com/*"
       ],
       "js": [
         "utils/storage.js",

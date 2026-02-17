@@ -13,30 +13,29 @@
     }
   });
 
-  /**
-   * Handles Substack SPA navigation and ensures features survive route changes/reloads.
-   */
   function initRouteAwareBoot() {
     bootForCurrentRoute();
 
     const observer = new MutationObserver(() => {
-      if (location.pathname !== currentPath) {
-        bootForCurrentRoute();
-      }
+      if (location.pathname !== currentPath) bootForCurrentRoute();
+      ensureNotesFabVisible();
     });
     observer.observe(document.documentElement, { childList: true, subtree: true });
 
     window.addEventListener('popstate', bootForCurrentRoute);
     window.addEventListener('hashchange', bootForCurrentRoute);
+
     setInterval(() => {
       if (location.pathname !== currentPath) bootForCurrentRoute();
-    }, 800);
+      ensureNotesFabVisible();
+    }, 1000);
   }
 
   function bootForCurrentRoute() {
+    if (!document.body) return;
+
     currentPath = location.pathname;
     const route = detectRoute();
-
     cleanupRouteUi(route);
 
     if (route.isEditor) {
@@ -55,11 +54,15 @@
 
   function detectRoute() {
     const pathname = location.pathname || '';
+    const host = location.hostname || '';
     const hasEditorDom = !!document.querySelector('[contenteditable="true"], .ProseMirror');
 
     const isEditor = /\/publish|\/editor|\/write|\/post\//.test(pathname) || hasEditorDom;
     const isNotesPage = /\/notes/.test(pathname);
-    const isDashboard = /\/dashboard|\/home|\/activity|\/stats|\/insights|\/subscribers|\/publish\/home/.test(pathname);
+    const isDashboardPath = /\/dashboard|\/home|\/activity|\/stats|\/insights|\/subscribers|\/publish\/home/.test(pathname);
+    const isDashboardHost = host === 'substack.com' || host === 'www.substack.com';
+
+    const isDashboard = isDashboardPath || isDashboardHost;
 
     return {
       isEditor,
@@ -73,18 +76,15 @@
       document.querySelector('.sgos-overlay-panel')?.remove();
       document.querySelector('.sgos-framework-toolbar')?.remove();
     }
-
     if (!route.isNotesOrDashboard) {
       document.querySelector('.sgos-notes-fab')?.remove();
       document.querySelector('.sgos-notes-scheduler')?.remove();
     }
-
     if (!route.isPublicPublication) {
       document.querySelector('.sgos-competitive-overlay')?.remove();
     }
   }
 
-  /** Creates scanner panel and runs analysis on input changes. */
   function initEditorOverlay() {
     const editor = findEditorNode();
     if (!editor || document.querySelector('.sgos-overlay-panel')) return;
@@ -109,22 +109,17 @@
       panel.querySelector('#sgos-issues').innerHTML = result.issues.map(i => `<li>${i.message}</li>`).join('') || '<li>No major structural issues detected.</li>';
       panel.querySelector('#sgos-engagement').textContent = `Engagement Potential: ${engagement.overall}/100`;
       panel.querySelector('#sgos-conversion').textContent = `Conversion Strength: ${conversion.strength}/100`;
-      applyIssueHighlights(editor, result.issues);
+      editor.classList.toggle('sgos-risk-highlight', result.issues.length >= 4);
     };
 
     editor.addEventListener('input', run);
     run();
   }
 
-  function applyIssueHighlights(editor, issues) {
-    editor.classList.toggle('sgos-risk-highlight', issues.length >= 4);
-  }
-
   function findEditorNode() {
     return document.querySelector('[contenteditable="true"], .ProseMirror, textarea');
   }
 
-  /** Injects quick framework insertion toolbar. */
   function initFrameworkButtons() {
     const editor = findEditorNode();
     if (!editor || document.querySelector('.sgos-framework-toolbar')) return;
@@ -140,7 +135,6 @@
     document.body.appendChild(wrap);
   }
 
-  /** Adds compact side button for Notes tools. */
   function initNotesSchedulerButton() {
     if (document.querySelector('.sgos-notes-fab')) return;
 
@@ -154,12 +148,20 @@
       const existing = document.querySelector('.sgos-notes-scheduler');
       if (existing) {
         await StorageUtil.setLocal({ sgosNotesPanelOpen: false });
-        return existing.remove();
+        existing.remove();
+        return;
       }
       await openNotesSchedulerPanel();
     });
 
     restoreNotesPanelIfOpen();
+  }
+
+  function ensureNotesFabVisible() {
+    const route = detectRoute();
+    if (route.isNotesOrDashboard && !document.querySelector('.sgos-notes-fab') && document.body) {
+      initNotesSchedulerButton();
+    }
   }
 
   async function restoreNotesPanelIfOpen() {
@@ -170,34 +172,59 @@
   }
 
   async function openNotesSchedulerPanel() {
-    await StorageUtil.setLocal({ sgosNotesPanelOpen: true });
+    if (document.querySelector('.sgos-notes-scheduler')) return;
 
+    await StorageUtil.setLocal({ sgosNotesPanelOpen: true });
     const panel = document.createElement('aside');
     panel.className = 'sgos-notes-scheduler';
     panel.innerHTML = `
-      <h4>Notes AI Analyzer + Scheduler</h4>
-      <p class="sgos-muted">Free local AI-style rewrites (no paid API), plus persistent scheduling.</p>
-      <textarea id="sgos-notes-input" rows="5" placeholder="Paste your note draft..."></textarea>
+      <div class="sgos-panel-head">
+        <h4>Notes AI Analyzer + Scheduler</h4>
+        <button id="sgos-close-note">Close</button>
+      </div>
+      <span class="sgos-panel-chip">Free local AI only · no paid API</span>
+      <textarea id="sgos-notes-input" rows="4" placeholder="Paste your note draft..."></textarea>
       <div id="sgos-notes-analysis" class="sgos-muted">No analysis yet.</div>
-      <div id="sgos-rewrites" class="sgos-rewrites"></div>
-      <input id="sgos-note-time" type="datetime-local" />
       <div class="sgos-inline-row">
         <button id="sgos-analyze-notes">Analyze + Rewrite</button>
         <button id="sgos-save-note">Schedule</button>
-        <button id="sgos-close-note">Close</button>
       </div>
+      <input id="sgos-note-time" type="datetime-local" />
       <div id="sgos-next-note" class="sgos-muted"></div>
-      <div id="sgos-gcs" class="sgos-muted"></div>
-      <button id="sgos-gcs-btn">Create Substack GCS</button>
+      <div id="sgos-status"></div>
+
+      <details class="sgos-section" id="sgos-rewrite-section" open>
+        <summary>Rewrite Suggestions</summary>
+        <div id="sgos-rewrites" class="sgos-rewrites"></div>
+      </details>
+
+      <details class="sgos-section" id="sgos-gcs-section">
+        <summary>Substack GCS Builder</summary>
+        <button id="sgos-gcs-btn">Generate GCS Blueprint</button>
+        <div id="sgos-gcs" class="sgos-muted"></div>
+      </details>
+
+      <details class="sgos-section" id="sgos-queue-section" open>
+        <summary>Scheduled Queue</summary>
+        <div id="sgos-queue-list" class="sgos-muted">No scheduled notes.</div>
+      </details>
     `;
     document.body.appendChild(panel);
 
+    const defaultDate = new Date(Date.now() + 3600 * 1000);
+    panel.querySelector('#sgos-note-time').value = toDatetimeLocal(defaultDate);
+
     const { scheduledNotes = [] } = await StorageUtil.getLocal(['scheduledNotes']);
+    renderQueue(panel, scheduledNotes);
     renderNextScheduled(panel, scheduledNotes);
 
     panel.querySelector('#sgos-analyze-notes').addEventListener('click', () => {
       const text = panel.querySelector('#sgos-notes-input').value.trim();
-      if (!text) return;
+      if (!text) {
+        setStatus(panel, 'Add text first to analyze.', true);
+        return;
+      }
+
       const result = ReaderPsychologyModule.analyzeText(text);
       const rewrites = AIRewriteAssistantModule.generate(text);
       const topIssues = result.issues.slice(0, 3).map(i => i.message).join(' • ') || 'Strong structure';
@@ -208,6 +235,7 @@
         btn.addEventListener('click', () => {
           const rewrite = decodeURIComponent(btn.dataset.rewrite || '');
           panel.querySelector('#sgos-notes-input').value = rewrite;
+          setStatus(panel, 'Rewrite inserted into draft.', false);
         });
       });
     });
@@ -215,13 +243,24 @@
     panel.querySelector('#sgos-save-note').addEventListener('click', async () => {
       const text = panel.querySelector('#sgos-notes-input').value.trim();
       const scheduledAt = panel.querySelector('#sgos-note-time').value;
-      if (!text || !scheduledAt) return;
 
-      const entry = { id: crypto.randomUUID(), text, scheduledAt, createdAt: new Date().toISOString() };
-      scheduledNotes.push(entry);
-      await StorageUtil.setLocal({ scheduledNotes });
-      renderNextScheduled(panel, scheduledNotes);
+      if (!text) return setStatus(panel, 'Cannot schedule empty note.', true);
+      if (!scheduledAt) return setStatus(panel, 'Select date/time first.', true);
+
+      const list = (await StorageUtil.getLocal(['scheduledNotes'])).scheduledNotes || [];
+      const entry = {
+        id: (globalThis.crypto?.randomUUID?.() || `note_${Date.now()}`),
+        text,
+        scheduledAt,
+        createdAt: new Date().toISOString()
+      };
+      list.push(entry);
+      await StorageUtil.setLocal({ scheduledNotes: list });
+
+      renderQueue(panel, list);
+      renderNextScheduled(panel, list);
       panel.querySelector('#sgos-notes-input').value = '';
+      setStatus(panel, `Scheduled for ${new Date(scheduledAt).toLocaleString()}.`, false);
     });
 
     panel.querySelector('#sgos-gcs-btn').addEventListener('click', () => {
@@ -235,6 +274,34 @@
     });
   }
 
+  function renderQueue(panel, notes) {
+    const root = panel.querySelector('#sgos-queue-list');
+    if (!notes.length) {
+      root.textContent = 'No scheduled notes.';
+      return;
+    }
+
+    const sorted = [...notes].sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
+    root.innerHTML = sorted.slice(0, 8).map(n => `
+      <article class="sgos-queue-item">
+        <p><strong>${new Date(n.scheduledAt).toLocaleString()}</strong></p>
+        <p>${escapeHtml(n.text.slice(0, 120))}${n.text.length > 120 ? '…' : ''}</p>
+        <button data-delete-id="${n.id}">Delete</button>
+      </article>
+    `).join('');
+
+    root.querySelectorAll('[data-delete-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-delete-id');
+        const list = (await StorageUtil.getLocal(['scheduledNotes'])).scheduledNotes || [];
+        const next = list.filter(item => item.id !== id);
+        await StorageUtil.setLocal({ scheduledNotes: next });
+        renderQueue(panel, next);
+        renderNextScheduled(panel, next);
+      });
+    });
+  }
+
   function renderRewriteCards(rewrites) {
     const blocks = rewrites.rewrites.map((rewrite, idx) => `
       <article class="sgos-rewrite-card">
@@ -243,9 +310,19 @@
         <button class="sgos-insert-rewrite" data-rewrite="${encodeURIComponent(rewrite)}">Use Rewrite</button>
       </article>
     `).join('');
-
     const hooks = rewrites.hooks.map(h => `<li>${escapeHtml(h)}</li>`).join('');
     return `${blocks}<div class="sgos-muted">Hook ideas:</div><ul>${hooks}</ul>`;
+  }
+
+  function setStatus(panel, text, isError) {
+    const el = panel.querySelector('#sgos-status');
+    el.textContent = text;
+    el.style.color = isError ? '#b91c1c' : '#065f46';
+  }
+
+  function toDatetimeLocal(date) {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
 
   function buildGcsTemplate(topic) {
@@ -262,11 +339,9 @@
   function renderNextScheduled(panel, notes) {
     const sorted = [...notes].sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
     const next = sorted.find(n => new Date(n.scheduledAt).getTime() > Date.now());
-    const count = sorted.length;
-
     panel.querySelector('#sgos-next-note').textContent = next
-      ? `Next scheduled note: ${new Date(next.scheduledAt).toLocaleString()} · total queued: ${count}`
-      : `No upcoming scheduled notes. Total queued: ${count}`;
+      ? `Next scheduled: ${new Date(next.scheduledAt).toLocaleString()} · queued: ${sorted.length}`
+      : `No upcoming scheduled notes. Queued: ${sorted.length}`;
   }
 
   function showResearchSuggestions(suggestions, selectedText) {

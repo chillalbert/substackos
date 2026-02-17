@@ -56,9 +56,11 @@
 
 .sgos-notes-scheduler {
   right: 64px;
-  top: 30%;
-  width: 320px;
+  top: 16px;
+  bottom: 16px;
+  width: min(360px, calc(100vw - 84px));
   padding: 12px;
+  overflow-y: auto;
 }
 
 .sgos-notes-scheduler h4 { margin: 0 0 8px; }
@@ -80,3 +82,15 @@
 .sgos-rewrite-card p { margin: 6px 0; color: #111827; font-size: 12px; }
 #sgos-gcs-btn { margin-top: 8px; width: 100%; }
 #sgos-gcs { margin-top: 8px; line-height: 1.45; }
+
+
+.sgos-panel-head { display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: #fff; padding-bottom: 8px; margin-bottom: 4px; z-index: 1; }
+.sgos-panel-head h4 { margin: 0; }
+.sgos-panel-chip { display: inline-block; background: #eef2ff; color: #3730a3; border-radius: 999px; font-size: 11px; padding: 2px 8px; margin: 4px 0; }
+.sgos-section { border: 1px solid #e5e7eb; border-radius: 10px; padding: 8px; margin: 8px 0; }
+.sgos-section summary { cursor: pointer; font-weight: 600; font-size: 12px; }
+.sgos-queue-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px; margin: 6px 0; background:#fff; }
+.sgos-queue-item p { margin: 4px 0; font-size: 12px; color:#111827; }
+.sgos-queue-item button { width: auto; padding: 4px 8px; font-size: 11px; }
+#sgos-status { margin-top: 6px; font-size: 12px; color: #065f46; }
+@media (max-height: 780px) { .sgos-notes-scheduler { top: 8px; bottom: 8px; right: 56px; } }
