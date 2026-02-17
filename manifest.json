@@ -31,6 +31,7 @@
         "utils/storage.js",
         "modules/readerPsychology.js",
         "modules/researchAssistant.js",
+        "modules/aiRewriteAssistant.js",
         "modules/competitiveOverlay.js",
         "modules/frameworkLibrary.js",
         "modules/engagementPrediction.js",
