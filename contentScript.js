@@ -1,16 +1,25 @@
 /**
  * Main content script orchestrating in-page overlays and editor tools.
+ * All UI widgets are opt-in per page type to avoid blocking native Substack features.
  */
 (() => {
-  const isEditor = /\/publish|\/editor|\/p\//.test(location.pathname) || !!document.querySelector('[contenteditable="true"]');
-  const isNotes = /\/notes/.test(location.pathname);
+  const pathname = location.pathname || '';
+  const isEditor = /\/publish|\/editor/.test(pathname) || !!document.querySelector('[contenteditable="true"], .ProseMirror');
+  const isNotesPage = /\/notes/.test(pathname);
+  const isDashboard = /\/dashboard|\/home|\/activity|\/stats/.test(pathname);
+  const isPublicPublication = !isEditor && !isNotesPage && !isDashboard;
 
   if (isEditor) {
     initEditorOverlay();
     initFrameworkButtons();
   }
 
-  if (!isEditor && !isNotes) {
+  if (isNotesPage || isDashboard) {
+    initNotesSchedulerButton();
+  }
+
+  // Restrict competitive overlay to publication-like pages only.
+  if (isPublicPublication && looksLikePublicationPage()) {
     injectCompetitiveOverlay();
   }
 
@@ -25,7 +34,7 @@
    */
   function initEditorOverlay() {
     const editor = findEditorNode();
-    if (!editor) return;
+    if (!editor || document.querySelector('.sgos-overlay-panel')) return;
 
     const panel = document.createElement('aside');
     panel.className = 'sgos-overlay-panel';
@@ -39,7 +48,7 @@
     document.body.appendChild(panel);
 
     const run = () => {
-      const content = editor.innerText || editor.textContent || '';
+      const content = editor.innerText || editor.textContent || editor.value || '';
       const result = ReaderPsychologyModule.analyzeText(content);
       const engagement = EngagementPredictionModule.score(content);
       const conversion = ConversionOptimizerModule.analyze(content);
@@ -84,6 +93,75 @@
   }
 
   /**
+   * Adds a compact side button that opens notes analyzer + scheduler.
+   */
+  function initNotesSchedulerButton() {
+    if (document.querySelector('.sgos-notes-fab')) return;
+
+    const fab = document.createElement('button');
+    fab.className = 'sgos-notes-fab';
+    fab.title = 'Open Notes Scheduler';
+    fab.textContent = 'N';
+    document.body.appendChild(fab);
+
+    fab.addEventListener('click', () => {
+      const existing = document.querySelector('.sgos-notes-scheduler');
+      if (existing) return existing.remove();
+      openNotesSchedulerPanel();
+    });
+  }
+
+  async function openNotesSchedulerPanel() {
+    const panel = document.createElement('aside');
+    panel.className = 'sgos-notes-scheduler';
+    panel.innerHTML = `
+      <h4>Notes Analyzer + Scheduler</h4>
+      <p class="sgos-muted">Paste a draft and schedule your next Notes without blocking the page.</p>
+      <textarea id="sgos-notes-input" rows="5" placeholder="Paste your draft paragraph..."></textarea>
+      <div id="sgos-notes-analysis" class="sgos-muted">No analysis yet.</div>
+      <input id="sgos-note-time" type="datetime-local" />
+      <div class="sgos-inline-row">
+        <button id="sgos-analyze-notes">Analyze</button>
+        <button id="sgos-save-note">Schedule</button>
+        <button id="sgos-close-note">Close</button>
+      </div>
+      <div id="sgos-next-note" class="sgos-muted"></div>
+    `;
+    document.body.appendChild(panel);
+
+    const { scheduledNotes = [] } = await StorageUtil.getLocal(['scheduledNotes']);
+    renderNextScheduled(panel, scheduledNotes);
+
+    panel.querySelector('#sgos-analyze-notes').addEventListener('click', () => {
+      const text = panel.querySelector('#sgos-notes-input').value.trim();
+      const result = ReaderPsychologyModule.analyzeText(text);
+      const topIssues = result.issues.slice(0, 3).map(i => i.message).join(' • ') || 'Strong structure';
+      panel.querySelector('#sgos-notes-analysis').textContent = `Score ${result.score}/100 — ${topIssues}`;
+    });
+
+    panel.querySelector('#sgos-save-note').addEventListener('click', async () => {
+      const text = panel.querySelector('#sgos-notes-input').value.trim();
+      const scheduledAt = panel.querySelector('#sgos-note-time').value;
+      if (!text || !scheduledAt) return;
+      scheduledNotes.push({ text, scheduledAt, createdAt: new Date().toISOString() });
+      await StorageUtil.setLocal({ scheduledNotes });
+      renderNextScheduled(panel, scheduledNotes);
+      panel.querySelector('#sgos-notes-input').value = '';
+    });
+
+    panel.querySelector('#sgos-close-note').addEventListener('click', () => panel.remove());
+  }
+
+  function renderNextScheduled(panel, notes) {
+    const next = [...notes]
+      .filter(n => new Date(n.scheduledAt).getTime() > Date.now())
+      .sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt))[0];
+    panel.querySelector('#sgos-next-note').textContent = next
+      ? `Next scheduled note: ${new Date(next.scheduledAt).toLocaleString()}`
+      : 'No upcoming scheduled notes.';
+  }
+
+  /**
    * Displays context-menu generated research suggestion modal.
    */
   function showResearchSuggestions(suggestions, selectedText) {
@@ -114,6 +192,7 @@
    * Injects competitive intel panel on public publication pages.
    */
   function injectCompetitiveOverlay() {
+    if (document.querySelector('.sgos-competitive-overlay')) return;
     const intel = CompetitiveOverlayModule.analyzePublicationPage();
     const panel = document.createElement('aside');
     panel.className = 'sgos-competitive-overlay';
@@ -126,6 +205,12 @@
       <p><strong>Hook patterns:</strong> ${intel.hookPatterns.join(', ')}</p>
     `;
     document.body.appendChild(panel);
+  }
+
+  function looksLikePublicationPage() {
+    const hasPostCards = document.querySelectorAll('article, .post-preview, .post-preview-title, h2').length > 3;
+    const likelyAppChrome = document.querySelector('[data-testid="dashboard"], .dashboard-container, [aria-label="Stats"]');
+    return hasPostCards && !likelyAppChrome;
   }
 
   /**
@@ -143,6 +228,6 @@
   }
 
   function escapeHtml(text) {
-    return text.replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;' }[c]));
+    return text.replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 })();

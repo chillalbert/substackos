@@ -38,7 +38,7 @@
         "contentScript.js"
       ],
       "css": [
-        "styles.css"
+        "contentStyles.css"
       ],
       "run_at": "document_idle"
     }

@@ -27,24 +27,3 @@ pre { white-space: pre-wrap; max-height: 160px; overflow: auto; background: #f8f
 table { width: 100%; border-collapse: collapse; font-size: 12px; }
 th, td { border-bottom: 1px solid var(--border); padding: 6px; text-align: left; vertical-align: top; }
 .winner-row { background: #eef2ff; font-weight: 600; }
-
-.sgos-overlay-panel,
-.sgos-competitive-overlay,
-.sgos-framework-toolbar,
-.sgos-research-modal {
-  position: fixed;
-  z-index: 2147483645;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-}
-
-.sgos-overlay-panel { right: 16px; top: 80px; width: 300px; padding: 12px; }
-.sgos-competitive-overlay { left: 16px; top: 80px; width: 280px; padding: 12px; }
-.sgos-framework-toolbar { right: 16px; bottom: 16px; padding: 8px; display: flex; gap: 6px; flex-wrap: wrap; width: 280px; }
-.sgos-framework-toolbar button { width: auto; font-size: 12px; padding: 6px 8px; }
-.sgos-research-modal { top: 110px; left: 50%; transform: translateX(-50%); width: 420px; max-width: calc(100vw - 20px); padding: 12px; }
-.sgos-research-modal ul { padding-left: 18px; max-height: 220px; overflow-y: auto; }
-.sgos-research-modal li { margin-bottom: 8px; cursor: pointer; }
-.sgos-risk-highlight { box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.5) !important; }

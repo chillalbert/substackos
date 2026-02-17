@@ -1,0 +1,76 @@
+/* Content script styles are fully namespaced to avoid altering Substack native UI. */
+.sgos-overlay-panel,
+.sgos-competitive-overlay,
+.sgos-framework-toolbar,
+.sgos-research-modal,
+.sgos-notes-fab,
+.sgos-notes-scheduler {
+  position: fixed;
+  z-index: 2147483645;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  color: #111827;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.sgos-overlay-panel { right: 16px; top: 80px; width: 280px; padding: 12px; max-height: 75vh; overflow: auto; }
+.sgos-overlay-panel h3 { margin: 0 0 6px; font-size: 14px; }
+.sgos-overlay-panel ul { margin: 6px 0 0; padding-left: 18px; }
+.sgos-overlay-panel li { font-size: 12px; margin-bottom: 4px; }
+
+.sgos-competitive-overlay { left: 16px; top: 80px; width: 260px; padding: 12px; }
+.sgos-framework-toolbar { right: 16px; bottom: 16px; padding: 8px; display: flex; gap: 6px; flex-wrap: wrap; width: 280px; }
+.sgos-framework-toolbar button,
+.sgos-notes-scheduler button,
+.sgos-research-modal button {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  background: #4f46e5;
+  color: #fff;
+}
+
+.sgos-framework-toolbar button { width: auto; background: #fff; color: #111827; }
+.sgos-research-modal { top: 110px; left: 50%; transform: translateX(-50%); width: 420px; max-width: calc(100vw - 20px); padding: 12px; }
+.sgos-research-modal ul { padding-left: 18px; max-height: 220px; overflow-y: auto; }
+.sgos-research-modal li { margin-bottom: 8px; cursor: pointer; }
+.sgos-risk-highlight { box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.5) !important; }
+
+.sgos-notes-fab {
+  right: 12px;
+  top: 45%;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: none;
+  background: #4f46e5;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sgos-notes-scheduler {
+  right: 64px;
+  top: 30%;
+  width: 320px;
+  padding: 12px;
+}
+
+.sgos-notes-scheduler h4 { margin: 0 0 8px; }
+.sgos-notes-scheduler textarea,
+.sgos-notes-scheduler input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+  margin: 6px 0;
+}
+
+.sgos-muted { color: #6b7280; font-size: 12px; }
+.sgos-inline-row { display: flex; gap: 8px; align-items: center; }
