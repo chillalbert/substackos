@@ -1,0 +1,96 @@
+/* Content script styles are fully namespaced to avoid altering Substack native UI. */
+.sgos-overlay-panel,
+.sgos-competitive-overlay,
+.sgos-framework-toolbar,
+.sgos-research-modal,
+.sgos-notes-fab,
+.sgos-notes-scheduler {
+  position: fixed;
+  z-index: 2147483645;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  color: #111827;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.sgos-overlay-panel { right: 16px; top: 80px; width: 280px; padding: 12px; max-height: 75vh; overflow: auto; }
+.sgos-overlay-panel h3 { margin: 0 0 6px; font-size: 14px; }
+.sgos-overlay-panel ul { margin: 6px 0 0; padding-left: 18px; }
+.sgos-overlay-panel li { font-size: 12px; margin-bottom: 4px; }
+
+.sgos-competitive-overlay { left: 16px; top: 80px; width: 260px; padding: 12px; }
+.sgos-framework-toolbar { right: 16px; bottom: 16px; padding: 8px; display: flex; gap: 6px; flex-wrap: wrap; width: 280px; }
+.sgos-framework-toolbar button,
+.sgos-notes-scheduler button,
+.sgos-research-modal button {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  background: #4f46e5;
+  color: #fff;
+}
+
+.sgos-framework-toolbar button { width: auto; background: #fff; color: #111827; }
+.sgos-research-modal { top: 110px; left: 50%; transform: translateX(-50%); width: 420px; max-width: calc(100vw - 20px); padding: 12px; }
+.sgos-research-modal ul { padding-left: 18px; max-height: 220px; overflow-y: auto; }
+.sgos-research-modal li { margin-bottom: 8px; cursor: pointer; }
+.sgos-risk-highlight { box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.5) !important; }
+
+.sgos-notes-fab {
+  right: 12px;
+  top: 45%;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: none;
+  background: #4f46e5;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sgos-notes-scheduler {
+  right: 64px;
+  top: 16px;
+  bottom: 16px;
+  width: min(360px, calc(100vw - 84px));
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.sgos-notes-scheduler h4 { margin: 0 0 8px; }
+.sgos-notes-scheduler textarea,
+.sgos-notes-scheduler input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+  margin: 6px 0;
+}
+
+.sgos-muted { color: #6b7280; font-size: 12px; }
+.sgos-inline-row { display: flex; gap: 8px; align-items: center; }
+
+.sgos-rewrites { margin: 8px 0; max-height: 220px; overflow: auto; }
+.sgos-rewrite-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 8px; margin-bottom: 8px; background: #f8fafc; }
+.sgos-rewrite-card p { margin: 6px 0; color: #111827; font-size: 12px; }
+#sgos-gcs-btn { margin-top: 8px; width: 100%; }
+#sgos-gcs { margin-top: 8px; line-height: 1.45; }
+
+
+.sgos-panel-head { display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: #fff; padding-bottom: 8px; margin-bottom: 4px; z-index: 1; }
+.sgos-panel-head h4 { margin: 0; }
+.sgos-panel-chip { display: inline-block; background: #eef2ff; color: #3730a3; border-radius: 999px; font-size: 11px; padding: 2px 8px; margin: 4px 0; }
+.sgos-section { border: 1px solid #e5e7eb; border-radius: 10px; padding: 8px; margin: 8px 0; }
+.sgos-section summary { cursor: pointer; font-weight: 600; font-size: 12px; }
+.sgos-queue-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px; margin: 6px 0; background:#fff; }
+.sgos-queue-item p { margin: 4px 0; font-size: 12px; color:#111827; }
+.sgos-queue-item button { width: auto; padding: 4px 8px; font-size: 11px; }
+#sgos-status { margin-top: 6px; font-size: 12px; color: #065f46; }
+@media (max-height: 780px) { .sgos-notes-scheduler { top: 8px; bottom: 8px; right: 56px; } }
